@@ -1,6 +1,21 @@
-# Orbit Chat v2
+# Orbit Chat v3
 
 An original, responsive web chat application with an animated interface. The app is a single static `index.html`.
+
+
+## What's new in v3
+
+- Reply to any message, see its original context, jump back to the parent.
+- Unsent drafts persist per channel and account after reload (browser-local).
+- Unread counts in other channels update live and appear in the browser tab.
+- Load older messages 100 at a time, instead of only the latest 150.
+- Animated jump-to-latest control for long conversations.
+- Switch channels with Alt+ArrowUp or Alt+ArrowDown.
+- DB migration enforces that replies stay within the same channel and prevents changes to message ownership.
+
+**Upgrade required:** Re-run [orbit-schema.sql](./orbit-schema.sql) in Supabase SQL Editor after updating the page. It safely adds the `reply_to` column to an existing v2 database.
+
+**Testing:** JavaScript parser and static HTML/selector checks passed. Full local browser execution was blocked in the current environment; live Supabase behavior must be verified once a project is configured.
 
 ## Try it
 
@@ -46,4 +61,4 @@ New pushes to `main` redeploy automatically.
 
 Current rooms are **public to all authenticated users**. No private DMs or end-to-end encryption. Add moderation, anti-spam/rate-limits, reporting, account policies, and message pagination before public promotion. Supabase free-tier quotas apply.
 
-The first Orbit prototype's `public.messages` table is not reused by Orbit v2.
+The original starter's `public.messages` table is not reused by Orbit v3.
