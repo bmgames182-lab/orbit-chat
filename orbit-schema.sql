@@ -75,3 +75,36 @@ begin
   end if;
  end loop;
 end $$;
+
+-- ORBIT V3: run this updated SQL again when upgrading an existing database.
+-- Replies are constrained to their original channel and message identity is immutable.
+alter table public.orbit_messages
+  add column if not exists reply_to uuid references public.orbit_messages(id) on delete set null;
+create index if not exists orbit_messages_reply_idx on public.orbit_messages(reply_to);
+
+create or replace function public.orbit_validate_message()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.user_id is distinct from old.user_id
+      or new.channel_slug is distinct from old.channel_slug
+      or new.reply_to is distinct from old.reply_to
+      or new.created_at is distinct from old.created_at
+      or new.id is distinct from old.id then
+      raise exception 'Only message content may be edited';
+    end if;
+  end if;
+  if new.reply_to is not null and not exists (
+    select 1 from public.orbit_messages original
+    where original.id = new.reply_to
+      and original.channel_slug = new.channel_slug
+  ) then
+    raise exception 'Replies must point to a message in the same channel';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists orbit_validate_message_trigger on public.orbit_messages;
+create trigger orbit_validate_message_trigger
+before insert or update on public.orbit_messages
+for each row execute function public.orbit_validate_message();
